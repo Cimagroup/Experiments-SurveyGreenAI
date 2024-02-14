@@ -1,2 +1,5 @@
 yolov5
+Dataset2/*/
+emissions.csv
+yolov5m.pt
 .ipynb_checkpoints

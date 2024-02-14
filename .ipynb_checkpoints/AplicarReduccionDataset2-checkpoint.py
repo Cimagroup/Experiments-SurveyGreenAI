@@ -4,7 +4,7 @@ import sys
 from data_reduction.statistic import srs_selection, prd_selection
 from data_reduction.geometric import clc_selection, mms_selection, des_selection
 from data_reduction.ranking import phl_selection, nrmd_selection, psa_selection
-from data_reduction.fes import fes_selection
+from data_reduction.wrapper import fes_selection
 # sys.path.append("Original_repositories/pytorch_influence_functions")
 # import pytorch_influence_functions as ptif
 # sys.path.append("..")
@@ -499,7 +499,6 @@ def des(paths_imagenes,tensor_YOLO,categorias,perc):
         perc_base = 0.2
     elif perc > 0 and perc < 0.3:
         perc_base = 0.05
-    print(f'perc_base = {perc_base}')
     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
     tracker.start()
     inicio = time.time()
@@ -507,8 +506,7 @@ def des(paths_imagenes,tensor_YOLO,categorias,perc):
     print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
     fin = time.time()
     tiempo_transcurrido = fin - inicio
-    print(f"El tiempo de ejecución de DES con una reducción a {perc} fue de: {tiempo_transcurrido} segundos")
-    print(X_res.shape)
+    print(f"El tiempo de ejecución de DES {X_res.shape} {perc_base} con una reducción a {perc} fue de: {tiempo_transcurrido} segundos")
     indices = obtenIndicesSeleccionados(tensor_YOLO,X_res)
     calcular_epsilon_representatividad(tensor_YOLO,np.array(categorias),X_res,y_res)
     find_epsilon(tensor_YOLO,np.array(categorias),X_res,y_res)

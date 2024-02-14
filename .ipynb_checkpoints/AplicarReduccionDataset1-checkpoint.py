@@ -3,7 +3,7 @@ import os
 from data_reduction.statistic import srs_selection, prd_selection
 from data_reduction.geometric import clc_selection, mms_selection, des_selection
 from data_reduction.ranking import phl_selection, nrmd_selection, psa_selection
-from data_reduction.fes import fes_selection
+from data_reduction.wrapper import fes_selection
 # sys.path.append("Original_repositories/pytorch_influence_functions")
 # import pytorch_influence_functions as ptif
 # sys.path.append("..")
