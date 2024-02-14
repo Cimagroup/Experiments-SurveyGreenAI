@@ -40,7 +40,7 @@ metodosPosibles=["NINGUNO","SRS","DES","NRMD","MMS","PSA","RKMEANS","PRD","PHL",
 def PathsImagenesCarpeta(ruta):
     paths_imagenes = []
     paths_imagenes_only = []
-    ruta_nueva = '../Dataset2/dataYOLOv5/train/imagesTodas'
+    ruta_nueva = 'Dataset2/dataYOLOv5/train/imagesTodas'
     if not os.path.exists(ruta_nueva):
         ruta_carpeta = ruta +'/images'
     else:
@@ -207,13 +207,13 @@ class MiModelo(nn.Module):
         return x
 
 # def influence(paths_imagenes,perc,tensor_YOLO,categorias):
-#     trainImagesPath = '../Dataset2/dataYOLOv5/train/imagesTodas'
-#     testImagesPath = '../Dataset2/dataYOLOv5/test/images'
+#     trainImagesPath = 'Dataset2/dataYOLOv5/train/imagesTodas'
+#     testImagesPath = 'Dataset2/dataYOLOv5/test/images'
 #     trainImages = [os.path.join(trainImagesPath,path) for path in os.listdir(trainImagesPath)]
 #     testImages = [os.path.join(testImagesPath,path) for path in os.listdir(testImagesPath)]
-#     trainLabelsPath = '../Dataset2/dataYOLOv5/train/labels'
+#     trainLabelsPath = 'Dataset2/dataYOLOv5/train/labels'
 #     trainLabels = categorizar_archivos_influence(trainLabelsPath)
-#     testLabelsPath = '../Dataset2/dataYOLOv5/test/labels'
+#     testLabelsPath = 'Dataset2/dataYOLOv5/test/labels'
 #     testLabels= categorizar_archivos_influence(testLabelsPath)
 #     transform = transforms.Compose([transforms.ToTensor(),])
 #     train_dataset = ImageDataset(trainImages, trainLabels, transform)
@@ -320,10 +320,10 @@ def train_fes(X,y,model,criterion,optimizer,args):
     return X_red, y_red        
     
 def fes(paths_imagenes,perc,tensor_YOLO,categorias):
-    trainImagesPath = '../Dataset2/dataYOLOv5/train/imagesTodas'
+    trainImagesPath = 'Dataset2/dataYOLOv5/train/imagesTodas'
     trainImages = [os.path.join(trainImagesPath,path) for path in os.listdir(trainImagesPath)]
     print(f"Realizando método FES... en {len(trainImages)} imagenes")
-    trainLabelsPath = '../Dataset2/dataYOLOv5/train/labels'
+    trainLabelsPath = 'Dataset2/dataYOLOv5/train/labels'
     trainLabels = categorizar_archivos_influence(trainLabelsPath)
     numCat = np.unique(trainLabels).shape[0]
     
@@ -506,7 +506,7 @@ def des(paths_imagenes,tensor_YOLO,categorias,perc):
     print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
     fin = time.time()
     tiempo_transcurrido = fin - inicio
-    print(f"El tiempo de ejecución de DES {X_res.shape} {perc_base} con una reducción a {perc} fue de: {tiempo_transcurrido} segundos")
+    print(f"El tiempo de ejecución de DES con una reducción a {perc} fue de: {tiempo_transcurrido} segundos")
     indices = obtenIndicesSeleccionados(tensor_YOLO,X_res)
     calcular_epsilon_representatividad(tensor_YOLO,np.array(categorias),X_res,y_res)
     find_epsilon(tensor_YOLO,np.array(categorias),X_res,y_res)
@@ -614,15 +614,15 @@ def preprocess_img_yolo(img_path):
 
 def main():
     parser = argparse.ArgumentParser(description='Script que realiza operaciones con argumentos.')
-    parser.add_argument('--datasetCarpeta',default="../Dataset2/dataYOLOv5/train", type=str, help='Carpeta donde se encuentra el dataset a reducir(Entrenamiento')
+    parser.add_argument('--datasetCarpeta',default="Dataset2/dataYOLOv5/train", type=str, help='Carpeta donde se encuentra el dataset a reducir(Entrenamiento')
     parser.add_argument('--name', default='SRS', type=str, help='Metodo de reducción a aplicar')
     parser.add_argument('--perc', default='0.5', type=float, help="Tasa de reducción a aplicar(entre 0 y 1")
 
     args = parser.parse_args()
     metodo = args.name
     perc = args.perc
-    ruta_carpeta = "../Dataset2/dataYOLOv5/train/images"  # Reemplaza con la ruta correcta
-    ruta_nueva = '../Dataset2/dataYOLOv5/train/imagesTodas'
+    ruta_carpeta = "Dataset2/dataYOLOv5/train/images"  # Reemplaza con la ruta correcta
+    ruta_nueva = 'Dataset2/dataYOLOv5/train/imagesTodas'
     
     if metodo not in metodosPosibles:
         raise ValueError("El método de reducción elegido(--name) no está entre uno de los posibles: ",metodosPosibles)
