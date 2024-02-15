@@ -7,8 +7,9 @@ from data_reduction.ranking import phl_selection, nrmd_selection, psa_selection
 from data_reduction.wrapper import fes_selection
 # sys.path.append("Original_repositories/pytorch_influence_functions")
 # import pytorch_influence_functions as ptif
-# sys.path.append("..")
 warnings.filterwarnings("ignore")
+warnings.filterwarnings("ignore", category=FutureWarning)
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -20,12 +21,13 @@ import torchvision
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 from torch.utils.data import Dataset
 from torchvision import transforms
 from tqdm import tqdm
 import io
 import time
+import math
 from codecarbon import OfflineEmissionsTracker
 import shutil
 from PIL import Image
@@ -35,7 +37,7 @@ from scipy.spatial import cKDTree
 import argparse
 import pandas as pd
 
-metodosPosibles=["NINGUNO","SRS","DES","NRMD","MMS","PSA","RKMEANS","PRD","PHL","IF","FES"]
+metodosPosibles=["NINGUNO","SRS","DES","NRMD","MMS","PSA","RKMEANS","PRD","PHL","FES"]
 
 def PathsImagenesCarpeta(ruta):
     paths_imagenes = []
@@ -102,7 +104,7 @@ def categorizar_archivos(ruta):
 def categorizar_archivos_influence(ruta_carpeta):
     categorias = []
     for root, dirs, files in os.walk(ruta_carpeta):
-        for file in tqdm(files):
+        for file in files:
             if file.endswith('.txt'):
                 path_archivo = os.path.join(root, file)
                 with open(path_archivo, 'r') as archivo:
@@ -298,7 +300,7 @@ def forgetting_step(model, current_accuracy, forgetting_events, X, y, args):
                 forgetting_events[indice] += 1 if current_accuracy[indice] > correct[j] else 0
                 current_accuracy[indice] = correct[j]
                 
-def train_fes(X,y,model,criterion,optimizer,args):
+def train_fes(X,y,model,criterion,optimizer,args,perc):
     train_dataset = TensorDataset(X, y)
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     n_y = len(y)
@@ -309,14 +311,7 @@ def train_fes(X,y,model,criterion,optimizer,args):
         print(f"\rEpoch {i}", end='', flush=True)
         train_step(train_loader, model, args, criterion, optimizer)
         forgetting_step(model, current_accuracy, forgetting_events, X, y, args)
-    X_red, y_red = fes_selection(X,y,current_accuracy, forgetting_events,args)
-    # X_red, y_red = fes_classwise(X,y,current_accuracy, forgetting_events,args)
-    # train_dataset_red = TensorDataset(X_red, y_red)
-    # train_loader_red = DataLoader(train_dataset_red, batch_size=args.batch_size, shuffle=True)
-    # print("\n Epochs after reduction:")
-    # for i in range(args.initial_epochs,args.total_epochs):
-    #     print(f"\rEpoch {i}", end='', flush=True)
-    #     train_step(train_loader_red, model, args, criterion, optimizer)
+    X_red, y_red = fes_selection(X,y,current_accuracy, forgetting_events,perc,args.initial_epochs)
     return X_red, y_red        
     
 def fes(paths_imagenes,perc,tensor_YOLO,categorias):
@@ -409,7 +404,7 @@ def fes(paths_imagenes,perc,tensor_YOLO,categorias):
     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
     tracker.start()
     inicio=time.time()
-    X_res, y_res= train_fes(tensor,torch.tensor(trainLabels),model,criterion,optimizer,args)
+    X_res, y_res= train_fes(tensor,torch.tensor(trainLabels),model,criterion,optimizer,args,perc)
     print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
     fin = time.time()
     tiempo_transcurrido = fin - inicio
@@ -623,17 +618,17 @@ def main():
     perc = args.perc
     ruta_carpeta = "Dataset2/dataYOLOv5/train/images"  # Reemplaza con la ruta correcta
     ruta_nueva = 'Dataset2/dataYOLOv5/train/imagesTodas'
-    
+    if not os.path.exists(ruta_nueva):
+      os.rename(ruta_carpeta, ruta_nueva)
+      os.makedirs(ruta_carpeta)
+    else:
+      shutil.rmtree(ruta_carpeta)
+      os.makedirs(ruta_carpeta)
+        
     if metodo not in metodosPosibles:
         raise ValueError("El método de reducción elegido(--name) no está entre uno de los posibles: ",metodosPosibles)
     elif metodo == "NINGUNO":
         print("No has seleccionado ningún metodo, por lo que vas a entrenar con el conjunto de entrenamiento al completo")
-        if not os.path.exists(ruta_nueva):
-          os.rename(ruta_carpeta, ruta_nueva)
-          os.makedirs(ruta_carpeta)
-        else:
-          shutil.rmtree(ruta_carpeta)
-          os.makedirs(ruta_carpeta)
             
         # Obtener la lista de archivos en la carpeta
         archivos = os.listdir(ruta_nueva)
@@ -697,12 +692,6 @@ def main():
             elif metodo == "FES":
                 paths_imagenes_seleccionadas = fes(paths_imagenes_only,perc,tensor_YOLO,categorias)
                 
-            if not os.path.exists(ruta_nueva):
-              os.rename(ruta_carpeta, ruta_nueva)
-              os.makedirs(ruta_carpeta)
-            else:
-              shutil.rmtree(ruta_carpeta)
-              os.makedirs(ruta_carpeta)
                 
             # Obtener la lista de archivos en la carpeta
             archivos = os.listdir(ruta_nueva)
