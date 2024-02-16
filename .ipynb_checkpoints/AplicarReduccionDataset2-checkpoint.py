@@ -5,8 +5,6 @@ from data_reduction.statistic import srs_selection, prd_selection
 from data_reduction.geometric import clc_selection, mms_selection, des_selection
 from data_reduction.ranking import phl_selection, nrmd_selection, psa_selection
 from data_reduction.wrapper import fes_selection
-# sys.path.append("Original_repositories/pytorch_influence_functions")
-# import pytorch_influence_functions as ptif
 warnings.filterwarnings("ignore")
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -208,60 +206,6 @@ class MiModelo(nn.Module):
         x = nn.functional.softmax(x,dim=1)
         return x
 
-# def influence(paths_imagenes,perc,tensor_YOLO,categorias):
-#     trainImagesPath = 'Dataset2/dataYOLOv5/train/imagesTodas'
-#     testImagesPath = 'Dataset2/dataYOLOv5/test/images'
-#     trainImages = [os.path.join(trainImagesPath,path) for path in os.listdir(trainImagesPath)]
-#     testImages = [os.path.join(testImagesPath,path) for path in os.listdir(testImagesPath)]
-#     trainLabelsPath = 'Dataset2/dataYOLOv5/train/labels'
-#     trainLabels = categorizar_archivos_influence(trainLabelsPath)
-#     testLabelsPath = 'Dataset2/dataYOLOv5/test/labels'
-#     testLabels= categorizar_archivos_influence(testLabelsPath)
-#     transform = transforms.Compose([transforms.ToTensor(),])
-#     train_dataset = ImageDataset(trainImages, trainLabels, transform)
-#     test_dataset = ImageDataset(testImages,testLabels,transform)
-#     trainloader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-#     testloader = DataLoader(test_dataset, batch_size=16, shuffle=False)
-#     numCat = np.unique(trainLabels).shape[0]
-#     ptif.init_logging()
-#     config = {
-#             'outdir': 'outdir_wheelchair',
-#             'seed': 42,
-#             'gpu': -1,
-#             'num_classes': numCat,
-#             'test_sample_num': 1,
-#             'test_start_index': 0,
-#             'recursion_depth': 1,
-#             'r_averaging': 1, #recursion_depth * r_averaging should be as the size of train data
-#             'scale': None,
-#             'damp': None,
-#             'calc_method': 'img_wise',
-#             'log_filename': None,
-#         }
-#     model=MiModelo(numCat)
-#     maximo = config["num_classes"]*config["test_sample_num"]
-#     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
-#     tracker.start()
-#     inicio=time.time()
-#     influences = ptif.calc_img_wise(config, model, trainloader, testloader)
-#     fin = time.time()
-#     tiempo_transcurrido = fin - inicio
-#     print(f"El tiempo de ejecución fue de: {tiempo_transcurrido} segundos")
-#     with open(f'outdir_wheelchair/influence_results_tmp_0_{config["test_sample_num"]}_last-i_{maximo-1}.json','r') as archivo:
-#         influenceList = json.load(archivo)
-#         lista = influenceList[f'{maximo-1}']['influence']
-#         indicesIF = sorted(range(len(lista)), key=lambda k: lista[k])
-
-#     perc=perc
-#     indices = indicesIF[:int(perc*len(paths_imagenes))]
-#     print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
-#     calcular_epsilon_representatividad(tensor_YOLO,np.array(categorias),tensor_YOLO[indices],np.array(categorias)[indices])
-#     find_epsilon(tensor_YOLO,np.array(categorias),tensor_YOLO[indices],np.array(categorias)[indices])
-#     paths_imagenes_IF=np.array(paths_imagenes)[indices]
-#     shutil.rmtree(config["outdir"])
-#     print(f'Hemos pasado de {len(paths_imagenes)} muestras a {len(paths_imagenes_IF)} muestras con el método INFLUENCE y una reducción a {perc}')
-#     return paths_imagenes_IF
-
 def train_step(train_loader, model, args, criterion, optimizer):
     model = model.to(args.device)
     model.train() 
@@ -311,8 +255,8 @@ def train_fes(X,y,model,criterion,optimizer,args,perc):
         print(f"\rEpoch {i}", end='', flush=True)
         train_step(train_loader, model, args, criterion, optimizer)
         forgetting_step(model, current_accuracy, forgetting_events, X, y, args)
-    X_red, y_red = fes_selection(X,y,current_accuracy, forgetting_events,perc,args.initial_epochs)
-    return X_red, y_red        
+    indices = fes_selection(y,current_accuracy, forgetting_events,perc,args.initial_epochs)
+    return indices        
     
 def fes(paths_imagenes,perc,tensor_YOLO,categorias):
     trainImagesPath = 'Dataset2/dataYOLOv5/train/imagesTodas'
@@ -404,12 +348,12 @@ def fes(paths_imagenes,perc,tensor_YOLO,categorias):
     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
     tracker.start()
     inicio=time.time()
-    X_res, y_res= train_fes(tensor,torch.tensor(trainLabels),model,criterion,optimizer,args,perc)
+    indices = train_fes(tensor,torch.tensor(trainLabels),model,criterion,optimizer,args,perc)
     print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
     fin = time.time()
     tiempo_transcurrido = fin - inicio
     print(f"El tiempo de ejecución fue de: {tiempo_transcurrido} segundos")
-    indices = obtenIndicesSeleccionados(tensor,X_res)
+    # indices = obtenIndicesSeleccionados(tensor,X_res)
     calcular_epsilon_representatividad(tensor_YOLO,np.array(categorias),tensor_YOLO[indices],np.array(categorias)[indices])
     find_epsilon(tensor_YOLO,np.array(categorias),tensor_YOLO[indices],np.array(categorias)[indices])
     paths_imagenes_reducidas = np.array(paths_imagenes)[indices]
@@ -508,23 +452,6 @@ def des(paths_imagenes,tensor_YOLO,categorias,perc):
     paths_imagenes_reducidas=np.array(paths_imagenes)[indices]
     return paths_imagenes_reducidas
 
-# def dom(paths_imagenes,tensor_YOLO,categorias,perc):
-#     inicio = time.time()
-#     for epsi in np.arange(0.1,10,0.025):
-#        X_res, y_res= dom_selection(tensor_YOLO,np.array(categorias),epsilon=epsi)
-#        if X_res.shape[0] / tensor_YOLO.shape[0] > perc-0.01 and X_res.shape[0] / tensor_YOLO.shape[0] < perc+0.01:
-#          print(epsi)
-#          fin = time.time()
-#          tiempo_transcurrido = fin - inicio
-#          print(f"El tiempo de ejecución de DOM con una reducción a {perc} fue de: {tiempo_transcurrido} segundos")
-#          break
-    
-#     indices = obtenIndicesSeleccionados(tensor_YOLO,X_res)
-#     calcular_epsilon_representatividad(tensor_YOLO,np.array(categorias),X_res,y_res)
-#     find_epsilon(tensor_YOLO,np.array(categorias),X_res,y_res)
-#     paths_imagenes_reducidas=np.array(paths_imagenes)[indices]
-#     return paths_imagenes_reducidas
-
 def nrmd(paths_imagenes,tensor_YOLO,categorias,perc):
     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
     tracker.start()
@@ -608,10 +535,10 @@ def preprocess_img_yolo(img_path):
   return x
 
 def main():
-    parser = argparse.ArgumentParser(description='Script que realiza operaciones con argumentos.')
-    parser.add_argument('--datasetCarpeta',default="Dataset2/dataYOLOv5/train", type=str, help='Carpeta donde se encuentra el dataset a reducir(Entrenamiento')
-    parser.add_argument('--name', default='SRS', type=str, help='Metodo de reducción a aplicar')
-    parser.add_argument('--perc', default='0.5', type=float, help="Tasa de reducción a aplicar(entre 0 y 1")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--datasetCarpeta',default="Dataset2/dataYOLOv5/train", type=str, help='Folder where is located the dataset to reduce')
+    parser.add_argument('--name', default='SRS', type=str, help='Reduction method to apply')
+    parser.add_argument('--perc', default='0.5', type=float, help="Reduction rate to apply(between 0 and 1)")
 
     args = parser.parse_args()
     metodo = args.name
@@ -626,28 +553,26 @@ def main():
       os.makedirs(ruta_carpeta)
         
     if metodo not in metodosPosibles:
-        raise ValueError("El método de reducción elegido(--name) no está entre uno de los posibles: ",metodosPosibles)
+        raise ValueError("The chosen reduction method(--name) is not among the possible ones: ",metodosPosibles)
     elif metodo == "NINGUNO":
-        print("No has seleccionado ningún metodo, por lo que vas a entrenar con el conjunto de entrenamiento al completo")
+        print("You have not selected any method, so you are going to train with the complete training set.")
             
-        # Obtener la lista de archivos en la carpeta
         archivos = os.listdir(ruta_nueva)
-        print("Archivos originales: ", len(archivos))
-        # Recorrer los archivos y borrar los que no estén en nombres_viables
+        print("Number of original files:", len(archivos))
         for archivo in archivos:
             if archivo.endswith(".png"):
                 ruta_archivo = os.path.join(ruta_nueva, archivo)
                 ruta_archivo_nueva = os.path.join(ruta_carpeta, archivo)
                 shutil.copy(ruta_archivo,ruta_archivo_nueva)
         
-        print("El conjunto de entrenamiento tiene un tamaño de: ", len(os.listdir(ruta_nueva)))
+        print("The training set has a size of:  ", len(os.listdir(ruta_nueva)))
     else:
-        print("Metodo Seleccionado: ", metodo)
+        print("Selected method: ", metodo)
 
         if perc < 0 or perc > 1:
-            raise ValueError("La tasa de reducción(--perc) debe estar entre 0 y 1")
+            raise ValueError("The reduction rate(--perc) should be between 0 and 1")
         else:
-            print("Tasa de reducción seleccionada: ", perc)
+            print("Reduction rate selected:", perc)
 
             paths_imagenes, paths_imagenes_only = PathsImagenesCarpeta(args.datasetCarpeta)
             categorias = categorizar_archivos(args.datasetCarpeta)
@@ -660,9 +585,9 @@ def main():
             i=0
             for path in tqdm(paths_imagenes):
               img = preprocess_img_yolo(path)
-              features = backbone(img.to('cuda')) # si ponemos img.to('cuda') mucho mas rapido pero hay que tener GPU conectada
+              features = backbone(img.to('cuda'))
               x = torch.nn.AdaptiveAvgPool2d(1)(features)
-              x = torch.squeeze(x) # elimina las dimensiones innecesarias, es decir las que tienen 1
+              x = torch.squeeze(x) 
               tensor[i,:] = x
               i+=1
             
@@ -675,8 +600,6 @@ def main():
                 paths_imagenes_seleccionadas = srs(paths_imagenes_only,tensor_YOLO,categorias,perc)
             elif metodo == "DES":
                 paths_imagenes_seleccionadas = des(paths_imagenes_only,tensor_YOLO,categorias,perc)
-            # elif metodo == "DOM":
-            #     paths_imagenes_seleccionadas = dom(paths_imagenes_only,tensor_YOLO,categorias,perc)
             elif metodo == "NRMD":
                 paths_imagenes_seleccionadas = nrmd(paths_imagenes_only,tensor_YOLO,categorias,perc)
             elif metodo == "PHL":
@@ -687,15 +610,13 @@ def main():
                 paths_imagenes_seleccionadas = mms(paths_imagenes_only,tensor_YOLO,categorias,perc)
             elif metodo == "PRD":
                 paths_imagenes_seleccionadas = prd(paths_imagenes_only,tensor_YOLO,categorias,perc)
-            # elif metodo == "IF":
-            #     paths_imagenes_seleccionadas = influence(paths_imagenes_only,perc,tensor_YOLO,categorias)
             elif metodo == "FES":
                 paths_imagenes_seleccionadas = fes(paths_imagenes_only,perc,tensor_YOLO,categorias)
                 
                 
             # Obtener la lista de archivos en la carpeta
             archivos = os.listdir(ruta_nueva)
-            print("Archivos originales: ", len(archivos))
+            print("Number of original files: ", len(archivos))
             # Recorrer los archivos y borrar los que no estén en nombres_viables
             for archivo in archivos:
                 if archivo.endswith(".png") and archivo in paths_imagenes_seleccionadas:
@@ -703,9 +624,9 @@ def main():
                     ruta_archivo_nueva = os.path.join(ruta_carpeta, archivo)
                     shutil.copy(ruta_archivo,ruta_archivo_nueva)
             
-            print("Proceso completado.")
-            print("Archivos originales: ", len(os.listdir(ruta_nueva)))
-            print("Archivos tras métodos de reduccion ", metodo , " y porcentage de reducción a un ", perc, ": ",  len(os.listdir(ruta_carpeta)))
+            print("Process completed.")
+            print("Number of original files:", len(os.listdir(ruta_nueva)))
+            print("Files after using ", metodo , " reduction method and a reduction percentage of ", perc, ": ",  len(os.listdir(ruta_carpeta)))
 
 if __name__ == "__main__":
     main()

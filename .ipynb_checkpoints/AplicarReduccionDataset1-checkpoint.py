@@ -5,8 +5,6 @@ from data_reduction.statistic import srs_selection, prd_selection
 from data_reduction.geometric import clc_selection, mms_selection, des_selection
 from data_reduction.ranking import phl_selection, nrmd_selection, psa_selection
 from data_reduction.wrapper import fes_selection
-# sys.path.append("Original_repositories/pytorch_influence_functions")
-# import pytorch_influence_functions as ptif
 warnings.filterwarnings("ignore")
 warnings.filterwarnings("ignore", category=FutureWarning)
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -56,39 +54,7 @@ def PathsImagenesCarpeta(ruta):
     print(f'Existen {len(paths_imagenes)} imágenes en la ruta {ruta}')
     return paths_imagenes, paths_imagenes_only
 
-def categorizar_archivos(ruta): #esto es especifico para este dataset,debe crear una propia para su dataset
-    categorias = []
-    NumeroPersonasEnSillas=0
-    NumeroPersonas=0
-    for root, dirs, files in os.walk(ruta+"/labels"):
-        for file in files:
-            if file.endswith('.txt'):
-                path_archivo = os.path.join(root, file)
-                with open(path_archivo, 'r') as archivo:
-                    lineas = archivo.readlines()
-                    for line in lineas:
-                        if line.startswith('0'):
-                            NumeroPersonas += 1
-                        elif line.startswith('1'):
-                            NumeroPersonasEnSillas += 1
-                    # Categoría 0: Solo un objeto: Silla de ruedas
-                    if len(lineas) == 1 and lineas[0].startswith('1'):
-                        categorias.append(0)
-                     #Categoría 1: Solo un objeto: Persona
-                    elif len(lineas) == 1 and lineas[0].startswith('0'):
-                        categorias.append(1)
-                    # Categoría 2: Múltiples objetos combinando sillas y personas
-                    elif len(lineas) > 1 and any(line.startswith('0') for line in lineas) and any(line.startswith('1') for line in lineas):
-                        categorias.append(2)
-                    # Categoría 3: Múltiples objetos, todos sillas de rueda
-                    elif len(lineas) > 1 and all(line.startswith('1') for line in lineas):
-                        categorias.append(3) #le damos 1 para mayor balanceo
-                    # Múltiples objetos, todos personas, también categoria 1
-                    elif len(lineas) > 1 and all(line.startswith('0') for line in lineas):
-                        categorias.append(1) 
-    return categorias,NumeroPersonas,NumeroPersonasEnSillas
-
-def categorizar_archivos_influence(ruta_carpeta):
+def categorize_files(ruta_carpeta):
     categorias = []
     for root, dirs, files in os.walk(ruta_carpeta):
         for file in files:
@@ -96,42 +62,40 @@ def categorizar_archivos_influence(ruta_carpeta):
                 path_archivo = os.path.join(root, file)
                 with open(path_archivo, 'r') as archivo:
                     lineas = archivo.readlines()
-                    # Categoría 0: Solo un objeto: Silla de ruedas
+                    # Category 0: Only one object: Wheelchair
                     if len(lineas) == 1 and lineas[0].startswith('1'):
                         categorias.append(0)
-                     #Categoría 1: Solo un objeto: Persona
+                    #Category 1: Only one object: Person
                     elif len(lineas) == 1 and lineas[0].startswith('0'):
                         categorias.append(1)
-                    # Categoría 2: Múltiples objetos combinando sillas y personas
+                    # Category 2: Multiple objects combining chairs and people
                     elif len(lineas) > 1 and any(line.startswith('0') for line in lineas) and any(line.startswith('1') for line in lineas):
                         categorias.append(2)
-                    # Categoría 3: Múltiples objetos, todos sillas de rueda
+                    # Category 3: Multiple items, all wheelchairs
                     elif len(lineas) > 1 and all(line.startswith('1') for line in lineas):
-                        categorias.append(3) #le damos 1 para mayor balanceo
-                    # Múltiples objetos, todos personas, también categoria 1
+                        categorias.append(3)
+                    # Multiple objects, all people, also category 1
                     elif len(lineas) > 1 and all(line.startswith('0') for line in lineas):
                         categorias.append(1) 
     return categorias
 
 def representative_kmeans(X,categorias,perc):
     n_classes = np.unique(categorias).shape[0]
-    kmeans = KMeans(n_clusters=n_classes)  # Reemplaza con el número de clusters deseado
+    kmeans = KMeans(n_clusters=n_classes) 
     kmeans.fit(X)
     cluster_labels = kmeans.labels_
     indices = np.arange(0,X.shape[0])
     indicesElegidos=[]
     perc = perc
-    for i in range(kmeans.n_clusters):  # Iterar sobre cada cluster
-        cluster_center = kmeans.cluster_centers_[i]  # Obtener el centroide del cluster i
+    for i in range(kmeans.n_clusters):  
+        cluster_center = kmeans.cluster_centers_[i]
     
-        # Calcular la distancia euclidiana de cada imagen al centroide del cluster
         distances = []
         for j, label in enumerate(cluster_labels):
             if label == i:
                 dist = np.linalg.norm(X[j] - cluster_center)
                 distances.append((j, dist))
     
-        # Ordenar las imágenes del cluster por su distancia al centroide y seleccionar las más cercanas
         distances.sort(key=lambda x: x[1])
         num_representatives = min(int(int(X.shape[0]*perc)/n_classes), len(distances)) 
         indicesElegidos.extend([indices[idx] for idx, _ in distances[:num_representatives]])
@@ -143,7 +107,7 @@ def rkmeans(paths_imagenes,tensor_YOLO,y,perc):
     tracker.start()
     inicio=time.time()
     indices = representative_kmeans(tensor_YOLO,y,perc)
-    print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
+    print("Estimated emissions: ", tracker.stop()*1000, " CO2 grams")
     calcular_epsilon_representatividad(tensor_YOLO,np.array(y),tensor_YOLO[indices],np.array(y)[indices])
     representative_images = [paths_imagenes[indice] for indice in indices]
     
@@ -194,59 +158,6 @@ class MiModelo(nn.Module):
         x = nn.functional.softmax(x,dim=1)
         return x
 
-# def influence(paths_imagenes,perc,tensor_YOLO,categorias):
-#     trainImagesPath = 'yolov5/wheelchair-detection-1/train/imagesTodas'
-#     testImagesPath = 'yolov5/wheelchair-detection-1/test/images'
-#     trainImages = [os.path.join(trainImagesPath,path) for path in os.listdir(trainImagesPath)]
-#     testImages = [os.path.join(testImagesPath,path) for path in os.listdir(testImagesPath)]
-#     trainLabelsPath = 'yolov5/wheelchair-detection-1/train/labels'
-#     trainLabels = categorizar_archivos_influence(trainLabelsPath)
-#     testLabelsPath = 'yolov5/wheelchair-detection-1/test/labels'
-#     testLabels= categorizar_archivos_influence(testLabelsPath)
-#     transform = transforms.Compose([transforms.ToTensor(),])
-#     train_dataset = ImageDataset(trainImages, trainLabels, transform)
-#     test_dataset = ImageDataset(testImages,testLabels,transform)
-#     trainloader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-#     testloader = DataLoader(test_dataset, batch_size=16, shuffle=False)
-#     ptif.init_logging()
-#     numCat = np.unique(trainLabels).shape[0]
-#     config = {
-#             'outdir': 'outdir_wheelchair',
-#             'seed': 42,
-#             'gpu': -1,
-#             'num_classes': numCat,
-#             'test_sample_num': 1,
-#             'test_start_index': 0,
-#             'recursion_depth': 1,
-#             'r_averaging': 1, #recursion_depth * r_averaging should be as the size of train data
-#             'scale': None,
-#             'damp': None,
-#             'calc_method': 'img_wise',
-#             'log_filename': None,
-#         }
-#     model=MiModelo(numCat)
-#     maximo = config["num_classes"]*config["test_sample_num"]
-#     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
-#     tracker.start()
-#     inicio=time.time()
-#     influences = ptif.calc_img_wise(config, model, trainloader, testloader)
-#     print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
-#     fin = time.time()
-#     tiempo_transcurrido = fin - inicio
-#     print(f"El tiempo de ejecución fue de: {tiempo_transcurrido} segundos")
-#     with open(f'outdir_wheelchair/influence_results_tmp_0_{config["test_sample_num"]}_last-i_{maximo-1}.json','r') as archivo:
-#         influenceList = json.load(archivo)
-#         lista = influenceLis[f'{maximo-1}']['influence']
-#         indicesIF = sorted(range(len(lista)), key=lambda k: lista[k])
-
-#     perc=perc
-#     indices = indicesIF[:int(perc*len(paths_imagenes))]
-#     calcular_epsilon_representatividad(tensor_YOLO,np.array(categorias),tensor_YOLO[indices],np.array(categorias)[indices])
-#     find_epsilon(tensor_YOLO,np.array(categorias),tensor_YOLO[indices],np.array(categorias)[indices])
-#     paths_imagenes_IF=np.array(paths_imagenes)[indices]
-#     shutil.rmtree(config["outdir"])
-#     print(f'Hemos pasado de {len(paths_imagenes)} muestras a {len(paths_imagenes_IF)} muestras con el método INFLUENCE y una reducción a {perc}')
-#     return paths_imagenes_IF
 
 def train_step(train_loader, model, args, criterion, optimizer):
     model = model.to(args.device)
@@ -297,7 +208,7 @@ def train_fes(X,y,model,criterion,optimizer,args,perc):
         print(f"\rEpoch {i}", end='', flush=True)
         train_step(train_loader, model, args, criterion, optimizer)
         forgetting_step(model, current_accuracy, forgetting_events, X, y, args)
-    X_red, y_red = fes_selection(X,y,current_accuracy, forgetting_events,perc,args.initial_epochs)
+    X_red, y_red = fes_selection(y,current_accuracy, forgetting_events,perc,args.initial_epochs, X=X)
     # X_red, y_red = fes_classwise(X,y,current_accuracy, forgetting_events,args)
     # train_dataset_red = TensorDataset(X_red, y_red)
     # train_loader_red = DataLoader(train_dataset_red, batch_size=args.batch_size, shuffle=True)
@@ -311,7 +222,7 @@ def fes(paths_imagenes,perc,tensor_YOLO,categorias):
     trainImagesPath = 'yolov5/wheelchair-detection-1/train/imagesTodas'
     trainImages = [os.path.join(trainImagesPath,path) for path in os.listdir(trainImagesPath)]
     trainLabelsPath = 'yolov5/wheelchair-detection-1/train/labels'
-    trainLabels = categorizar_archivos_influence(trainLabelsPath)
+    trainLabels = categorize_files(trainLabelsPath)
     numCat = np.unique(trainLabels).shape[0]
     
     tensor = torch.zeros((len(trainImages),3,416,416))
@@ -396,7 +307,7 @@ def fes(paths_imagenes,perc,tensor_YOLO,categorias):
     tracker.start()
     inicio=time.time()
     X_res, y_res= train_fes(tensor,torch.tensor(trainLabels),model,criterion,optimizer,args,perc)
-    print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
+    print("Estimated emissions: ", tracker.stop()*1000, " CO2 grams")
     fin = time.time()
     tiempo_transcurrido = fin - inicio
     print(f"El tiempo de ejecución fue de: {tiempo_transcurrido} segundos")
@@ -468,7 +379,7 @@ def srs(paths_imagenes,tensor_YOLO,categorias,perc):
     tracker.start()
     inicio = time.time()
     X_res, y_res = srs_selection(tensor_YOLO,np.array(categorias),perc)
-    print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
+    print("Estimated emissions: ", tracker.stop()*1000, " CO2 grams")
     fin = time.time()
     tiempo_transcurrido = fin - inicio
     print(f"El tiempo de ejecución de SRS con una reducción a {perc} fue de: {tiempo_transcurrido} segundos")
@@ -488,7 +399,7 @@ def des(paths_imagenes,tensor_YOLO,categorias,perc):
     tracker.start()
     inicio = time.time()
     X_res, y_res = des_selection(tensor_YOLO,np.array(categorias),perc,perc_base)
-    print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
+    print("Estimated emissions: ", tracker.stop()*1000, " CO2 grams")
     fin = time.time()
     tiempo_transcurrido = fin - inicio
     print(f"El tiempo de ejecución de DES con una reducción a {perc} fue de: {tiempo_transcurrido} segundos")
@@ -498,31 +409,12 @@ def des(paths_imagenes,tensor_YOLO,categorias,perc):
     paths_imagenes_reducidas=np.array(paths_imagenes)[indices]
     return paths_imagenes_reducidas
 
-# def dom(paths_imagenes,tensor_YOLO,categorias,perc):
-#     inicio = time.time()
-#     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
-#     tracker.start()
-#     for epsi in np.arange(0.1,10,0.025):
-#        X_res, y_res= dom_selection(tensor_YOLO,np.array(categorias),epsilon=epsi)
-#        if X_res.shape[0] / tensor_YOLO.shape[0] > perc-0.01 and X_res.shape[0] / tensor_YOLO.shape[0] < perc+0.01:
-#          print(epsi)
-#          fin = time.time()
-#          tiempo_transcurrido = fin - inicio
-#          print(f"El tiempo de ejecución de DOM con una reducción a {perc} fue de: {tiempo_transcurrido} segundos")
-#          break
-    
-#     indices = obtenIndicesSeleccionados(tensor_YOLO,X_res)
-#     print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
-#     calcular_epsilon_representatividad(tensor_YOLO,np.array(categorias),X_res,y_res)
-#     paths_imagenes_reducidas=np.array(paths_imagenes)[indices]
-#     return paths_imagenes_reducidas
-
 def nrmd(paths_imagenes,tensor_YOLO,categorias,perc):
     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
     tracker.start()
     inicio = time.time()
     X_res, y_res = nrmd_selection(tensor_YOLO,np.array(categorias),perc,"SVD_python")
-    print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
+    print("Estimated emissions: ", tracker.stop()*1000, " CO2 grams")
     fin = time.time()
     tiempo_transcurrido = fin - inicio
     print(f"El tiempo de ejecución de NRMD con una reducción a {perc} fue de: {tiempo_transcurrido} segundos")
@@ -538,7 +430,7 @@ def phl(paths_imagenes,tensor_YOLO,categorias,perc):
     tracker.start()
     inicio = time.time()
     X_res, y_res = phl_selection(tensor_YOLO,np.array(categorias),4,perc,"multiDim",1,"representative")
-    print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
+    print("Estimated emissions: ", tracker.stop()*1000, " CO2 grams")
     fin = time.time()
     tiempo_transcurrido = fin - inicio
     print(f"El tiempo de ejecución de PHL con una reducción a {perc} fue de: {tiempo_transcurrido} segundos")
@@ -553,7 +445,7 @@ def mms(paths_imagenes,tensor_YOLO,categorias,perc):
     tracker.start()
     inicio = time.time()
     X_res, y_res = mms_selection(tensor_YOLO,np.array(categorias),perc)
-    print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
+    print("Estimated emissions: ", tracker.stop()*1000, " CO2 grams")
     fin = time.time()
     tiempo_transcurrido = fin - inicio
     print(f"El tiempo de ejecución de MMS con una reducción a {perc} fue de: {tiempo_transcurrido} segundos")
@@ -580,7 +472,7 @@ def prd(paths_imagenes,tensor_YOLO,categorias,perc):
     tracker.start()
     inicio = time.time()
     X_res, y_res = prd_selection(tensor_YOLO,np.array(categorias),perc,3,"osqp")
-    print("Emisiones estimadas: ", tracker.stop()*1000, " de gramos de CO2e")
+    print("Estimated emissions: ", tracker.stop()*1000, " CO2 grams")
     fin = time.time()
     tiempo_transcurrido = fin - inicio
     print(f"El tiempo de ejecución de PRD con una reducción a {perc} fue de: {tiempo_transcurrido} segundos")
@@ -597,10 +489,10 @@ def preprocess_img_yolo(img_path):
   return x
 
 def main():
-    parser = argparse.ArgumentParser(description='Script que realiza operaciones con argumentos.')
-    parser.add_argument('--datasetCarpeta',default="yolov5/wheelchair-detection-1/train", type=str, help='Carpeta donde se encuentra el dataset a reducir(Entrenamiento')
-    parser.add_argument('--name', default='SRS', type=str, help='Metodo de reducción a aplicar')
-    parser.add_argument('--perc', default='0.5', type=float, help="Tasa de reducción a aplicar(entre 0 y 1")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--datasetCarpeta',default="yolov5/wheelchair-detection-1/train", type=str, help='Folder where is located the dataset to reduce')
+    parser.add_argument('--name', default='SRS', type=str, help='Reduction method to apply')
+    parser.add_argument('--perc', default='0.5', type=float, help="Reduction rate to apply (between 0 and 1)")
 
     args = parser.parse_args()
     metodo = args.name
@@ -616,33 +508,30 @@ def main():
       os.makedirs(ruta_carpeta)
             
     if metodo not in metodosPosibles:
-        raise ValueError("El método de reducción elegido(--name) no está entre uno de los posibles: ",metodosPosibles)
+        raise ValueError("The chosen reduction method(--name) is not among the possible ones: ",metodosPosibles)
     elif metodo == "NINGUNO":
-        print("No has seleccionado ningún metodo, por lo que vas a entrenar con el conjunto de entrenamiento al completo")
+        print("You have not selected any method, so you are going to train with the complete training set.")
             
-        # Obtener la lista de archivos en la carpeta
         archivos = os.listdir(ruta_nueva)
-        print("Archivos originales: ", len(archivos))
-        # Recorrer los archivos y borrar los que no estén en nombres_viables
+        print("Number Original Files", len(archivos))
         for archivo in archivos:
             if archivo.endswith(".jpg"):
                 ruta_archivo = os.path.join(ruta_nueva, archivo)
                 ruta_archivo_nueva = os.path.join(ruta_carpeta, archivo)
                 shutil.copy(ruta_archivo,ruta_archivo_nueva)
         
-        print("El conjunto de entrenamiento tiene un tamaño de: ", len(os.listdir(ruta_nueva)))
+        print("The training set has a size of: ", len(os.listdir(ruta_nueva)))
         
     else:
-        print("Metodo Seleccionado: ", metodo)
+        print("Selected Method: ", metodo)
 
         if perc < 0 or perc > 1:
-            raise ValueError("La tasa de reducción(--perc) debe estar entre 0 y 1")
+            raise ValueError("The rate of reduction(--perc) should be between 0 and 1")
         else:
-            print("Tasa de reducción seleccionada: ", perc)
+            print("Selected reduction rate: ", perc)
     
             paths_imagenes, paths_imagenes_only = PathsImagenesCarpeta(args.datasetCarpeta)
-            categorias,npersonas,npersonasSillas = categorizar_archivos(args.datasetCarpeta)
-            print(f'N personas: {npersonas}.  N personas en silla de ruedas: {npersonasSillas}')
+            categorias = categorize_files(args.datasetCarpeta)
         
             tensor = torch.zeros(len(paths_imagenes),768)
         
@@ -652,9 +541,9 @@ def main():
             i=0
             for path in tqdm(paths_imagenes):
               img = preprocess_img_yolo(path)
-              features = backbone(img.to('cuda')) # si ponemos img.to('cuda') mucho mas rapido pero hay que tener GPU conectada
+              features = backbone(img.to('cuda'))
               x = torch.nn.AdaptiveAvgPool2d(1)(features)
-              x = torch.squeeze(x) # elimina las dimensiones innecesarias, es decir las que tienen 1
+              x = torch.squeeze(x)
               tensor[i,:] = x
               i+=1
             
@@ -666,8 +555,6 @@ def main():
                 paths_imagenes_seleccionadas = srs(paths_imagenes_only,tensor_YOLO,categorias,perc)
             elif metodo == "DES":
                 paths_imagenes_seleccionadas = des(paths_imagenes_only,tensor_YOLO,categorias,perc)
-            # elif metodo == "DOM":
-            #     paths_imagenes_seleccionadas = dom(paths_imagenes_only,tensor_YOLO,categorias,perc)
             elif metodo == "NRMD":
                 paths_imagenes_seleccionadas = nrmd(paths_imagenes_only,tensor_YOLO,categorias,perc)
             elif metodo == "PHL":
@@ -678,25 +565,20 @@ def main():
                 paths_imagenes_seleccionadas = mms(paths_imagenes_only,tensor_YOLO,categorias,perc)
             elif metodo == "PRD":
                 paths_imagenes_seleccionadas = prd(paths_imagenes_only,tensor_YOLO,categorias,perc)
-            # elif metodo == "IF":
-            #     paths_imagenes_seleccionadas = influence(paths_imagenes_only,perc,tensor_YOLO,categorias)
             elif metodo == "FES":
                 paths_imagenes_seleccionadas = fes(paths_imagenes_only,perc,tensor_YOLO,categorias)
                 
-                
-            # Obtener la lista de archivos en la carpeta
             archivos = os.listdir(ruta_nueva)
-            print("Archivos originales: ", len(archivos))
-            # Recorrer los archivos y borrar los que no estén en nombres_viables
+            print("Number of original files: ", len(archivos))
             for archivo in archivos:
                 if archivo.endswith(".jpg") and archivo in paths_imagenes_seleccionadas:
                     ruta_archivo = os.path.join(ruta_nueva, archivo)
                     ruta_archivo_nueva = os.path.join(ruta_carpeta, archivo)
                     shutil.copy(ruta_archivo,ruta_archivo_nueva)
             
-            print("Proceso completado.")
-            print("Archivos originales: ", len(os.listdir(ruta_nueva)))
-            print("Archivos tras métodos de reduccion ", metodo , " y porcentage de reducción a un ", perc, ": ",  len(os.listdir(ruta_carpeta)))
+            print("Process completed.")
+            print("Number of original files:", len(os.listdir(ruta_nueva)))
+            print("Files after using", metodo , " reduction method and a percentage of reduction of ", perc, ": ",  len(os.listdir(ruta_carpeta)))
 
 if __name__ == "__main__":
     main()
