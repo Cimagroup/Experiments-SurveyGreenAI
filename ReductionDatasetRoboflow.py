@@ -445,7 +445,6 @@ def main():
     args = parser.parse_args()
     method = args.name
     perc = args.perc
-    print(os.getcwd())
     path_folder = "yolov5/wheelchair-detection-1/train/images"  # Reemplaza con la ruta correcta
     path_new = 'yolov5/wheelchair-detection-1/train/imagesTodas'
     if not os.path.exists(path_new):

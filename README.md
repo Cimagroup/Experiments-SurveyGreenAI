@@ -14,6 +14,8 @@ pip install requeriments.txt
 
 In order to perform the experiments on the Roboflow dataset, you must use Yolov5DatasetRoboflow.ipynb, where you can choose the reduction method, as well as the reduction percentage.
 
+Pd: If you want to select a reduction rate of 75%, you must enter 0.25 in perc, in the notebook Yolov5DatasetRoboflow.ipynb
+
 ## Dataset Mobility Aid 
 
 In order to perform the experiments on the Mobility Aid dataset, you must use Yolov5DatasetMobilityAid.ipynb, where you can choose the reduction method, as well as the reduction percentage.
@@ -25,4 +27,6 @@ To make it work, you must download the following files that you can find at http
   - Annotations RGB test set 2
   - image set textfiles
   
-Once downloaded, you must go to the DataFormatoYolov5.ipynb file inside the Dataset2 folder and run it completely, so that these images are in the proper YoloV5 format, and you can now use Yolov5DatasetMobilityAid.ipynb.
+Once downloaded, you must go to the DataFormatYolov5.ipynb file inside the Dataset2 folder and run it completely, so that these images are in the proper YoloV5 format, and you can now use Yolov5DatasetMobilityAid.ipynb.
+
+Pd: If you want to select a reduction rate of 75%, you must enter 0.25 in perc, in the notebook Yolov5DatasetMobilityAid.ipynb

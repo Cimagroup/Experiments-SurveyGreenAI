@@ -444,7 +444,6 @@ def main():
     args = parser.parse_args()
     method = args.name
     perc = args.perc
-    print(os.getcwd())
     path_folder = "Dataset2/dataYOLOv5/train/images"  # Reemplaza con la ruta correcta
     path_new = 'Dataset2/dataYOLOv5/train/imagesTodas'
     if not os.path.exists(path_new):
