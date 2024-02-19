@@ -210,19 +210,20 @@ def train_fes(X,y,model,criterion,optimizer,args,perc):
         print(f"\rEpoch {i}", end='', flush=True)
         train_step(train_loader, model, args, criterion, optimizer)
         forgetting_step(model, current_accuracy, forgetting_events, X, y, args)
-    indices = fes_selection(y,current_accuracy, forgetting_events,perc,args.initial_epochs)
-    return indices
+    indexes = fes_selection(y,current_accuracy, forgetting_events,perc,args.initial_epochs)
+    return indexes
     
 def fes(paths_images,perc,tensor_YOLO,category):
     trainImagesPath = 'Dataset2/dataYOLOv5/train/imagesTodas'
     trainImages = [os.path.join(trainImagesPath,path) for path in os.listdir(trainImagesPath)]
+    print(f"Doing method FES... in {len(trainImages)} imagenes")
     trainLabelsPath = 'Dataset2/dataYOLOv5/train/labels'
     trainLabels = categorize_files(trainLabelsPath)
     numCat = np.unique(trainLabels).shape[0]
     
-    tensor = torch.zeros((len(trainImages),3,540,960))
+    tensor = torch.zeros((len(trainImages),3,540,960),dtype=torch.float16)
     i=0
-    for path in trainImages:
+    for path in tqdm(trainImages):
       img = preprocess_img_yolo(path)
       tensor[i,:,:,:] = img
       i += 1
@@ -296,6 +297,7 @@ def fes(paths_images,perc,tensor_YOLO,category):
     '--device', 'cuda'
     ])
     model = MiModelo(numCat)
+    model = model.to(dtype=torch.float16)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
