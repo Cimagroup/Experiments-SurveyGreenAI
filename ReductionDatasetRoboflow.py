@@ -220,7 +220,7 @@ def fes(paths_images,perc,tensor_YOLO,category):
     trainLabels = categorize_files(trainLabelsPath)
     numCat = np.unique(trainLabels).shape[0]
     
-    tensor = torch.zeros((len(trainImages),3,416,416))
+    tensor = torch.zeros((len(trainImages),3,416,416),dtype=torch.float16)
     i=0
     for path in trainImages:
       img = preprocess_img_yolo(path)
@@ -289,13 +289,14 @@ def fes(paths_images,perc,tensor_YOLO,category):
     '--batch_size','15',
     '--no_dropout',
     '--dropout_prob', '0.33',
-    '--total_epochs','10',
-    '--initial_epochs','10',
+    '--total_epochs','20',
+    '--initial_epochs','20',
     '--reduction_ratio',str(perc),
     '--n_iter','15',
-    '--device', 'cpu'
+    '--device', 'cuda'
     ])
     model = MiModelo(numCat)
+    model = model.to(dtype=torch.float16)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
