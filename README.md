@@ -33,7 +33,7 @@ Pd: If you want to select a reduction rate of 75%, you must enter 0.25 in perc, 
 
 | Reduction Method    | Name you must enter in method in the  notebook |
 |---------------------|--------------------------|
-| Full train dataset            | None |
+| Full train dataset            | NONE |
 | Stratified Random Sampling           | SRS |
 | Distance-Entropy Selection           | DES |
 | Numerosity Reduction by Matrix Decomposition            | NRMD |
