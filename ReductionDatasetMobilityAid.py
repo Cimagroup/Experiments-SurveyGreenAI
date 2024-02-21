@@ -42,7 +42,7 @@ posibblesMethods=["NONE","SRS","DES","NRMD","MMS","PSA","RKMEANS","PRD","PHL","F
 def PathsImagesFolder(path):
     paths_images = []
     paths_images_only = []
-    new_path = 'Dataset2/dataYOLOv5/train/imagesTodas'
+    new_path = 'DatasetMobilityAid/dataYOLOv5/train/imagesTodas'
     if not os.path.exists(new_path):
         new_path = path +'/images'
     else:
@@ -214,10 +214,10 @@ def train_fes(X,y,model,criterion,optimizer,args,perc):
     return indexes
     
 def fes(paths_images,perc,tensor_YOLO,category):
-    trainImagesPath = 'Dataset2/dataYOLOv5/train/imagesTodas'
+    trainImagesPath = 'DatasetMobilityAid/dataYOLOv5/train/imagesTodas'
     trainImages = [os.path.join(trainImagesPath,path) for path in os.listdir(trainImagesPath)]
     print(f"Doing method FES... in {len(trainImages)} imagenes")
-    trainLabelsPath = 'Dataset2/dataYOLOv5/train/labels'
+    trainLabelsPath = 'DatasetMobilityAid/dataYOLOv5/train/labels'
     trainLabels = categorize_files(trainLabelsPath)
     numCat = np.unique(trainLabels).shape[0]
     
@@ -439,15 +439,15 @@ def preprocess_img_yolo(img_path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--datasetFolder',default="Dataset2/dataYOLOv5/train", type=str, help='Folder where is located the dataset to reduce')
+    parser.add_argument('--datasetFolder',default="DatasetMobilityAid/dataYOLOv5/train", type=str, help='Folder where is located the dataset to reduce')
     parser.add_argument('--name', default='SRS', type=str, help='Reduction method to apply')
     parser.add_argument('--perc', default='0.5', type=float, help="Reduction rate to apply (between 0 and 1)")
 
     args = parser.parse_args()
     method = args.name
     perc = args.perc
-    path_folder = "Dataset2/dataYOLOv5/train/images"  # Reemplaza con la ruta correcta
-    path_new = 'Dataset2/dataYOLOv5/train/imagesTodas'
+    path_folder = "DatasetMobilityAid/dataYOLOv5/train/images"  # Reemplaza con la ruta correcta
+    path_new = 'DatasetMobilityAid/dataYOLOv5/train/imagesTodas'
     if not os.path.exists(path_new):
       os.rename(path_folder, path_new)
       os.makedirs(path_folder)
