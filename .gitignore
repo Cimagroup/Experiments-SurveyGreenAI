@@ -1,6 +1,5 @@
-yolov5
-DatasetMobilityAid/*/
-emissions.csv
-yolov5m.pt
-.ipynb_checkpoints
-PruebaFES.ipynb
+ObjectDetection/yolov5
+ObjectDetection/DatasetMobilityAid/*/
+ObjectDetection/emissions.csv
+ObjectDetection/yolov5m.pt
+ObjectDetection/.ipynb_checkpoints
