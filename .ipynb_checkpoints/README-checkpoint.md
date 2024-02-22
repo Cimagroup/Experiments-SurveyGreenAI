@@ -1,22 +1,30 @@
-# Experiments Data Reduction on Images
+# Experiments
 
 This repository contains the files necessary to run the experiments performed in deliverable 6.2 for the European Project REXASI-PRO (REliable & eXplainable Swarm Intelligence for People with Reduced mObility) (HORIZON-CL4-HUMAN-01 programme under grant agreement nº101070028). It has been created by the CIMAgroup research team at the University of Seville, Spain.
 
 First, we must install the data reduction repository created by the CIMAgroup research team by following the instructions in https://github.com/Cimagroup/SurveyGreenAI.
 
-In addition we must install all the necessary python dependencies with :
+
+## Experiments Data Reduction for tabular data
+
+
+
+## Experiments Data Reduction for object detection
+
+In addition, we need to install all the necessary python dependencies to run these experiments with the next command, but first you need to enter in the folder ObjectDetection:
 
 ```bash
 pip install requeriments.txt
 ```
 
-## Dataset Roboflow
+
+### Dataset Roboflow
 
 In order to perform the experiments on the Roboflow dataset, you must use Yolov5DatasetRoboflow.ipynb, where you can choose the reduction method, as well as the reduction percentage.
 
 Pd: If you want to select a reduction rate of 75%, you must enter 0.25 in perc, in the notebook Yolov5DatasetRoboflow.ipynb. If you want to select a specific method of reduction, you can choose one of those listed in Table 1.
 
-## Dataset Mobility Aid 
+### Dataset Mobility Aid 
 
 In order to perform the experiments on the Mobility Aid dataset, you must use Yolov5DatasetMobilityAid.ipynb, where you can choose the reduction method, as well as the reduction percentage.
 
