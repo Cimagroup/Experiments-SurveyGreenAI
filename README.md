@@ -22,7 +22,7 @@ pip install requeriments.txt
 
 In order to perform the experiments on the Roboflow dataset, you must use Yolov5DatasetRoboflow.ipynb, where you can choose the reduction method, as well as the reduction percentage.
 
-Pd: If you want to select a reduction rate of 75%, you must enter 0.25 in perc, in the notebook Yolov5DatasetRoboflow.ipynb. If you want to select a specific method of reduction, you can choose one of those listed in Table 1.
+Pd: If you want to select a reduction rate of 75%, you must enter 0.25 in perc, in the notebook Yolov5DatasetRoboflow.ipynb. If you want to select a specific method of reduction, you can choose one of those listed in Table 1. For example, if you want to apply PRD with a reduction rate of 75 percent, you must run: !python ReductionDatasetRoboflow.py --name "PRD" --perc 0.25
 
 ### Dataset Mobility Aid 
 
@@ -37,7 +37,7 @@ To make it work, you must download the following files that you can find at http
   
 Once downloaded, you must go to the DataFormatYolov5.ipynb file inside the DatasetMobilityAid folder and run it completely, so that these images are in the proper YoloV5 format, and you can now use Yolov5DatasetMobilityAid.ipynb.
 
-Pd: If you want to select a reduction rate of 75%, you must enter 0.25 in perc, in the notebook Yolov5DatasetMobilityAid.ipynb. If you want to select a specific method of reduction, you can choose one of those listed in Table 1.
+Pd: If you want to select a reduction rate of 75%, you must enter 0.25 in perc, in the notebook Yolov5DatasetMobilityAid.ipynb. If you want to select a specific method of reduction, you can choose one of those listed in Table 1. For example, if you want to apply PRD with a reduction rate of 75 percent, you must run: !python ReductionDatasetMobilityAid.py --name "PRD" --perc 0.25
 
 | Reduction Method    | Name you must enter in method in the  notebook |
 |---------------------|--------------------------|

@@ -213,7 +213,7 @@ def train_fes(X,y,model,criterion,optimizer,args,perc):
     X_red, y_red = fes_selection(y,current_accuracy, forgetting_events,perc,args.initial_epochs, X=X)
     return X_red, y_red
     
-def fes(paths_images,perc,tensor_YOLO,category):
+def fes(paths_images,perc,tensor_YOLO,category,args):
     trainImagesPath = 'yolov5/wheelchair-detection-1/train/imagesTodas'
     trainImages = [os.path.join(trainImagesPath,path) for path in os.listdir(trainImagesPath)]
     trainLabelsPath = 'yolov5/wheelchair-detection-1/train/labels'
@@ -283,14 +283,14 @@ def fes(paths_images,perc,tensor_YOLO,category):
         type=str,
         default='cpu',
         help='Device to do the computations. Can be cou or cuda (default: cpu)')
-    args = parser.parse_args([
+    argsFES = parser.parse_args([
     '--learning_rate','0.01',
     '--momentum','0.5',
     '--batch_size','15',
     '--no_dropout',
     '--dropout_prob', '0.33',
-    '--total_epochs','20',
-    '--initial_epochs','20',
+    '--total_epochs',str(args.epochFES),
+    '--initial_epochs',str(args.epochFES),
     '--reduction_ratio',str(perc),
     '--n_iter','15',
     '--device', 'cuda'
@@ -298,11 +298,11 @@ def fes(paths_images,perc,tensor_YOLO,category):
     model = MiModelo(numCat)
     model = model.to(dtype=torch.float16)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
+    optimizer = optim.Adam(model.parameters(), lr=argsFES.learning_rate)
     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
     tracker.start()
     init=time.time()
-    X_res, y_res= train_fes(tensor,torch.tensor(trainLabels),model,criterion,optimizer,args,perc)
+    X_res, y_res= train_fes(tensor,torch.tensor(trainLabels),model,criterion,optimizer,argsFES,perc)
     print("Estimated emissions: ", tracker.stop()*1000, " CO2 grams")
     end = time.time()
     elapsed_time = end - init
@@ -363,11 +363,11 @@ def des(paths_images,tensor_YOLO,category,perc):
     paths_images_reduced=np.array(paths_images)[indexes]
     return paths_images_reduced
 
-def nrmd(paths_images,tensor_YOLO,category,perc):
+def nrmd(paths_images,tensor_YOLO,category,perc,argsNRMD):
     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
     tracker.start()
     init = time.time()
-    X_res, y_res = nrmd_selection(tensor_YOLO,np.array(category),perc,"SVD_python")
+    X_res, y_res = nrmd_selection(tensor_YOLO,np.array(category),perc,argsNRMD.decompositionNRMD)
     print("Estimated emissions: ", tracker.stop()*1000, " CO2 grams")
     end = time.time()
     elapsed_time = end - init
@@ -378,11 +378,11 @@ def nrmd(paths_images,tensor_YOLO,category,perc):
     return paths_images_reduced
 
 
-def phl(paths_images,tensor_YOLO,category,perc):
+def phl(paths_images,tensor_YOLO,category,perc,argsPHL):
     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
     tracker.start()
     init = time.time()
-    X_res, y_res = phl_selection(tensor_YOLO,np.array(category),4,perc,"multiDim",1,"representative")
+    X_res, y_res = phl_selection(tensor_YOLO,np.array(category),int(argsPHL.topologicalRadiusPHL),perc,argsPHL.scoringVersionPHL,int(argsPHL.dimensionPHL),argsPHL.landmarkPHL)
     print("Estimated emissions: ", tracker.stop()*1000, " CO2 grams")
     end = time.time()
     elapsed_time = end - init
@@ -406,9 +406,9 @@ def mms(paths_images,tensor_YOLO,category,perc):
     paths_images_reduced=np.array(paths_images)[indexes]
     return paths_images_reduced
 
-def psa(paths_images,tensor_YOLO,category,perc):
+def psa(paths_images,tensor_YOLO,category,perc,argsPSA):
     init = time.time()
-    X_res, y_res = psa_selection(tensor_YOLO,np.array(category),perc,5)
+    X_res, y_res = psa_selection(tensor_YOLO,np.array(category),perc,int(argsPSA.ransacPSA))
     end = time.time()
     elapsed_time = end - init
     print(f"The computing time of PSA with a reduction of {perc} has been of: {elapsed_time} seconds")
@@ -417,11 +417,11 @@ def psa(paths_images,tensor_YOLO,category,perc):
     paths_images_reduced=np.array(paths_images)[indexes]
     return paths_images_reduced
 
-def prd(paths_images,tensor_YOLO,category,perc):
+def prd(paths_images,tensor_YOLO,category,perc,argsPRD):
     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
     tracker.start()
     init = time.time()
-    X_res, y_res = prd_selection(tensor_YOLO,np.array(category),perc,3,"osqp")
+    X_res, y_res = prd_selection(tensor_YOLO,np.array(category),perc,int(argsPRD.sigmaPRD),argsPRD.optPRD)
     print("Estimated emissions: ", tracker.stop()*1000, " CO2 grams")
     end = time.time()
     elapsed_time = end - init
@@ -442,7 +442,15 @@ def main():
     parser.add_argument('--datasetFolder',default="yolov5/wheelchair-detection-1/train", type=str, help='Folder where is located the dataset to reduce')
     parser.add_argument('--name', default='SRS', type=str, help='Reduction method to apply')
     parser.add_argument('--perc', default='0.5', type=float, help="Reduction rate to apply (between 0 and 1)")
-
+    parser.add_argument('--epochFES', default='20', type=int, help="Epoch of FES model train", required=False)
+    parser.add_argument('--topologicalRadiusPHL', default='4', type=int, help="Topological radius for PHL", required=False)
+    parser.add_argument('--scoringVersionPHL', default='multiDim', type=str, help="Scoring version for PHL", required=False)
+    parser.add_argument('--dimensionPHL', default='1', type=int, help="Dimnesion for PHL", required=False)
+    parser.add_argument('--landmarkPHL', default='representative', type=str, help="Landmark type for PHL", required=False)
+    parser.add_argument('--decompositionNRMD', default='SVD_python', type=str, help="Decomposition type for NRMD", required=False)
+    parser.add_argument('--ransacPSA', default='5', type=int, help="ransac type for PSA", required=False)
+    parser.add_argument('--sigmaPRD', default='3', type=int, help="sigma for PRD", required=False)
+    parser.add_argument('--optPRD', default='osqp', type=str, help="opt for PRD", required=False)
     args = parser.parse_args()
     method = args.name
     perc = args.perc
@@ -504,17 +512,17 @@ def main():
             elif method == "DES":
                 paths_images_selected = des(paths_images_only,tensor_YOLO,category,perc)
             elif method == "NRMD":
-                paths_images_selected = nrmd(paths_images_only,tensor_YOLO,category,perc)
+                paths_images_selected = nrmd(paths_images_only,tensor_YOLO,category,perc,args)
             elif method == "PHL":
-                paths_images_selected = phl(paths_images_only,tensor_YOLO,category,perc)
+                paths_images_selected = phl(paths_images_only,tensor_YOLO,category,perc,args)
             elif method == "PSA":
-                paths_images_selected = psa(paths_images_only,tensor_YOLO,category,perc)
+                paths_images_selected = psa(paths_images_only,tensor_YOLO,category,perc,args)
             elif method == "MMS":
                 paths_images_selected = mms(paths_images_only,tensor_YOLO,category,perc)
             elif method == "PRD":
-                paths_images_selected = prd(paths_images_only,tensor_YOLO,category,perc)
+                paths_images_selected = prd(paths_images_only,tensor_YOLO,category,perc,args)
             elif method == "FES":
-                paths_images_selected = fes(paths_images_only,perc,tensor_YOLO,category)
+                paths_images_selected = fes(paths_images_only,perc,tensor_YOLO,category,args)
                 
             archivos = os.listdir(path_new)
             for archivo in archivos:

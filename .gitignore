@@ -3,3 +3,4 @@ ObjectDetection/DatasetMobilityAid/*/
 ObjectDetection/emissions.csv
 ObjectDetection/yolov5m.pt
 ObjectDetection/.ipynb_checkpoints
+.ipynb_checkpoints
