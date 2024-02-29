@@ -3,7 +3,7 @@ import os
 import sys
 from data_reduction.statistic import srs_selection, prd_selection
 from data_reduction.geometric import clc_selection, mms_selection, des_selection
-from data_reduction.ranking import phl_selection, nrmd_selection, psa_selection
+from data_reduction.ranking import phl_selection, nrmd_selection
 from data_reduction.wrapper import fes_selection
 from data_reduction.representativeness import find_epsilon
 
@@ -37,7 +37,7 @@ from scipy.spatial import cKDTree
 import argparse
 import pandas as pd
 
-posibblesMethods=["NONE","SRS","DES","NRMD","MMS","PSA","RKMEANS","PRD","PHL","FES"]
+posibblesMethods=["NONE","SRS","DES","NRMD","MMS","RKMEANS","PRD","PHL","FES"]
     
 def PathsImagesFolder(path):
     paths_images = []
@@ -406,16 +406,6 @@ def mms(paths_images,tensor_YOLO,category,perc):
     paths_images_reduced=np.array(paths_images)[indexes]
     return paths_images_reduced
 
-def psa(paths_images,tensor_YOLO,category,perc,argsPSA):
-    init = time.time(),
-    X_res, y_res = psa_selection(tensor_YOLO,np.array(category),perc,int(argsPSA.ransacPSA))
-    end = time.time()
-    elapsed_time = end - init
-    print(f"The computing time of PSA with a reduction of {perc} has been of: {elapsed_time} seconds")
-    indexes = indexesSelected(tensor_YOLO,X_res)
-    end_epsilon(tensor_YOLO,np.array(category),X_res,y_res)
-    paths_images_reduced=np.array(paths_images)[indexes]
-    return paths_images_reduced
 
 def prd(paths_images,tensor_YOLO,category,perc,argsPRD):
     tracker = OfflineEmissionsTracker(country_iso_code="ESP",log_level="ERROR")
@@ -448,7 +438,6 @@ def main():
     parser.add_argument('--dimensionPHL', default='1', type=int, help="Dimnesion for PHL", required=False)
     parser.add_argument('--landmarkPHL', default='representative', type=str, help="Landmark type for PHL", required=False)
     parser.add_argument('--decompositionNRMD', default='SVD_python', type=str, help="Decomposition type for NRMD", required=False)
-    parser.add_argument('--ransacPSA', default='5', type=int, help="ransac type for PSA", required=False)
     parser.add_argument('--sigmaPRD', default='3', type=int, help="sigma for PRD", required=False)
     parser.add_argument('--optPRD', default='osqp', type=str, help="opt for PRD", required=False)
     args = parser.parse_args()
@@ -515,8 +504,6 @@ def main():
                 paths_images_selected = nrmd(paths_images_only,tensor_YOLO,category,perc,args)
             elif method == "PHL":
                 paths_images_selected = phl(paths_images_only,tensor_YOLO,category,perc,args)
-            elif method == "PSA":
-                paths_images_selected = psa(paths_images_only,tensor_YOLO,category,perc,args)
             elif method == "MMS":
                 paths_images_selected = mms(paths_images_only,tensor_YOLO,category,perc)
             elif method == "PRD":
