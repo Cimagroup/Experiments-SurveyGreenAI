@@ -2,7 +2,7 @@
 
 This repository contains the files necessary to run the experiments performed in deliverable 6.2 for the European Project REXASI-PRO (REliable & eXplainable Swarm Intelligence for People with Reduced mObility) (HORIZON-CL4-HUMAN-01 programme under grant agreement nº101070028). It has been created by the CIMAgroup research team at the University of Seville, Spain.
 
-First, we must install the data reduction repository created by the CIMAgroup research team by following the instructions in https://github.com/Cimagroup/SurveyGreenAI.
+First, we must install the data reduction repository created by the CIMAgroup research team by following the instructions in https://github.com/Cimagroup/SurveyGreenAI. This experiments has been developed in Ubuntu 20.04.
 
 
 ## Experiments Data Reduction for tabular data
