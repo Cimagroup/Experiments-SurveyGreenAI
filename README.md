@@ -14,9 +14,13 @@ First, we must install the data reduction repository created by the CIMAgroup re
 In addition, we need to install all the necessary python dependencies to run these experiments with the next command, but first you need to enter in the folder ObjectDetection:
 
 ```bash
-pip install -r requeriments.txt
+pip install -r requeriments.txt  #on Ubuntu
 ```
+or, in case you are in Windows:
 
+```bash
+pip install -r requerimentsWindows.txt #on Windows
+```
 
 ### Dataset Roboflow
 
