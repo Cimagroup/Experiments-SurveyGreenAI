@@ -169,9 +169,9 @@ thop==0.1.1.post2209072238
 threadpoolctl==3.3.0
 tinycss2==1.2.1
 tomli==2.0.1
-torch==1.12.1+cu113
-torchaudio==0.12.1+cu113
-torchvision==0.13.1+cu113
+torch==2.2.1+cu118
+torchaudio==2.2.1+cu118
+torchvision==0.17.1+cu118
 tornado==6.4
 tqdm==4.66.2
 traitlets==5.14.1
