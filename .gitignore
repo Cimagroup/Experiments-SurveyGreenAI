@@ -6,5 +6,7 @@ ObjectDetection/.ipynb_checkpoints
 .ipynb_checkpoints
 TabularData/collision/emissions.csv
 TabularData/collision/output.log
+TabularData/collision/collision_stats.pkl
 TabularData/drybean/emissions.csv
 TabularData/drybean/output.log
+TabularData/drybean/drybean_stats.pkl
