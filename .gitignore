@@ -4,3 +4,7 @@ ObjectDetection/emissions.csv
 ObjectDetection/yolov5m.pt
 ObjectDetection/.ipynb_checkpoints
 .ipynb_checkpoints
+TabularData/collision/emissions.csv
+TabularData/collision/output.log
+TabularData/drybean/emissions.csv
+TabularData/drybean/output.log
