@@ -1,0 +1,14 @@
+cff-version: 1.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Toscano Durán
+    given-names: Víctor
+  - family-names: Perera Lago
+    given-names: Javier
+  
+title: "My Research Software"
+version: 1.0
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.10844476
+date-released: 2024-03-20
