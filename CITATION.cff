@@ -1,17 +1,30 @@
-cff-version: 1.0
-message: "If you use this software, please cite it as below."
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Repository experiments Survey Green AI
+message: 'If you use this software, please cite it as below.'
+type: software
 authors:
-- family-names: "Toscano-Durán"
-  given-names: "Víctor"
-  orcid: "https://orcid.org/0009-0006-1316-9026"
-- family-names: "Perera-Lago"
-  given-names: "Javier"
-  orcid: "https://orcid.org/0009-0009-4536-4020"
-- family-names: "Paluzo-Hidalgo"
-  given-names: "Eduardo"
-  orcid: "https://orcid.org/0000-0002-4280-5945"
-title: "Repository experiments Survey Green AI"
-version: 1.0
-doi: 10.5281/zenodo.10844476
-date-released: 2024-03-20
-url: "https://github.com/Cimagroup/Experiments-SurveyGreenAI/"
+  - given-names: Víctor
+    family-names: Toscano Durán
+    email: vtoscano@us.es
+    name-particle: Victor
+    affiliation: Universidad de Sevilla
+    orcid: 'https://orcid.org/0009-0006-1316-9026'
+  - given-names: Javier
+    family-names: Perera Lago
+    email: jperera@us.es
+    affiliation: Universidad de Sevilla
+    orcid: 'https://orcid.org/0000-9000-9453-6402'
+  - given-names: Eduardo
+    family-names: Paluzo Hidalgo
+    email: epaluzo@uloyola.es
+    affiliation: Universidad de Loyola
+    orcid: 'https://orcid.org/0000-0002-4280-5945'
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.10844476
+repository-code: 'https://github.com/Cimagroup/Experiments-SurveyGreenAI/'
+version: '1.0'
+date-released: '2023-03-20'
