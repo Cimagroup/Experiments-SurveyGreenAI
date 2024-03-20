@@ -5,8 +5,11 @@ authors:
   given-names: "Víctor"
   orcid: "https://orcid.org/0009-0006-1316-9026"
 - family-names: "Perera-Lago"
-    given-names: "Javier"
-  orcid: "0009-0009-4536-4020"
+  given-names: "Javier"
+  orcid: "https://orcid.org/0009-0009-4536-4020"
+- family-names: "Paluzo-Hidalgo"
+  given-names: "Eduardo"
+  orcid: "https://orcid.org/0000-0002-4280-5945"
 title: "Repository experiments Survey Green AI"
 version: 1.0
 doi: 10.5281/zenodo.10844476
