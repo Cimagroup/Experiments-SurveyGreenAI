@@ -95,3 +95,10 @@ Pd: If you want to select a reduction rate of 75%, you must enter 0.25 in perc, 
 | Forgetting Events Score            | FES |
 
 Table 1: Reduction methods list and how you have to call them in the notebook experiments
+
+# Citation and reference
+If you want to use our code for your experiments, please cite our paper as fpllows:
+
+Perera-Lago J, Toscano-Duran V, Paluzo-Hidalgo E et al. An in-depth analysis of data reduction methods for sustainable deep learning [version 2; peer review: 2 approved]. Open Res Europe 2024, 4:101 (https://doi.org/10.12688/openreseurope.17554.2)
+
+For further information, please contact us at: vtoscano@us.es jperera@us.es
